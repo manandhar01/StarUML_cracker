@@ -1,8 +1,7 @@
-#!/usr/bin/python3
-
 import sys
 import subprocess
 import os
+import ctypes
 
 
 def checkUsage():
@@ -35,25 +34,24 @@ def validatePath():
 
 
 def showUsageMessage():
-    print("Usage1: sudo ./crack.py \t⭐")
-    print("Usage2: sudo ./crack.py '<Path_to_StarUML_Directory>' \t⭐")
-    print("E.g: sudo ./crack.py '/opt/StarUML'")
-    return
+    print("Usage1: py crack.py \t⭐")
+    print("Usage2: py crack.py '<Path_to_StarUML_Directory>' \t⭐")
+    print("E.g: py crack.py 'C:\\Program Files\\StarUML'")
 
 
 def checkSuperUserPrivilege():
     print("\nChecking Permissions...⌛\n")
-    if(os.geteuid() != 0):
-        print("You need to run the script as a superuser...👑❗\n")
-        exit(1)
-    else:
+    if(ctypes.windll.shell32.IsUserAnAdmin() != 0):
         return 1
+    else:
+        print("You need to run the script as an administrator...👑❗")
+        exit(1)
 
 
 def checkRequirements():
     print("Checking for requirements...⌛\n")
     output = subprocess.run(['node', '--version'],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, shell=True)
     if(output.returncode):
         print("\n\"Node\" is not installed on this system...❗")
         print("Please install \"Node\" and run the script again...🔁")
@@ -63,7 +61,7 @@ def checkRequirements():
         version = output.stdout.replace('\n', '')
         print(f"Node{version} installed...✅")
         output = subprocess.run(
-            ['npm', 'list', '-g', 'asar'], capture_output=True, text=True)
+            ['npm', 'list', '-g', 'asar'], capture_output=True, text=True, shell=True)
         if(output.returncode):
             print("\n\"asar\" is not installed on this system❗")
             print("Please install \"asar\" and run the script again...🔁")
@@ -78,7 +76,7 @@ def checkRequirements():
 
 def extractAsarFile(asarFile, app):
     output = subprocess.run(
-        ['asar', 'extract', asarFile, app], capture_output=True, text=True)
+        ['asar', 'extract', asarFile, app], capture_output=True, text=True, shell=True)
     if(output.returncode):
         print(output.stderr)
         print("\nHacking Failed...❌\n")
@@ -89,7 +87,7 @@ def extractAsarFile(asarFile, app):
 
 def packApp(app, outputAsar):
     output = subprocess.run(
-        ['asar', 'pack', app, outputAsar], capture_output=True, text=True)
+        ['asar', 'pack', app, outputAsar], capture_output=True, text=True, shell=True)
     if(output.returncode):
         print(output.stderr)
         print("\nHacking Failed...❌\n")
@@ -99,39 +97,41 @@ def packApp(app, outputAsar):
 
 
 def cleanUp(asarBackup, asarFile, app, outputAsar):
-    output = subprocess.run(['mv', asarFile, asarBackup],
-                            capture_output=True, text=True)
+    output = subprocess.run(['move', asarFile, asarBackup],
+                            capture_output=True, text=True, shell=True)
     if(output.returncode):
         print(output.stderr)
         print("\nHacking Failed...❌\n")
         exit(1)
     else:
         output = subprocess.run(
-            ['rm', '-rf', app, asarFile], capture_output=True, text=True)
+            ['deltree', app], capture_output=True, text=True, shell=True)
+        output = subprocess.run(
+            ['del', asarFile], capture_output=True, text=True, shell=True)
         if(output.returncode):
             print(output.stderr)
             output = subprocess.run(
-                ['mv', asarBackup, asarFile], capture_output=True, text=True)
+                ['move', asarBackup, asarFile], capture_output=True, text=True, shell=True)
             output = subprocess.run(
-                ['rm', asarBackup], capture_output=True, text=True)
+                ['del', asarBackup], capture_output=True, text=True, shell=True)
             print("\nError while cleaning...❕\n")
             print("\nHacking Failed...❌\n")
             exit(1)
         else:
             output = subprocess.run(
-                ['mv', outputAsar, asarFile], capture_output=True, text=True)
+                ['move', outputAsar, asarFile], capture_output=True, text=True, shell=True)
             if(output.returncode):
                 print(output.stderr)
                 output = subprocess.run(
-                    ['mv', asarBackup, asarFile], capture_output=True, text=True)
+                    ['move', asarBackup, asarFile], capture_output=True, text=True, shell=True)
                 output = subprocess.run(
-                    ['rm', asarBackup], capture_output=True, text=True)
+                    ['del', asarBackup], capture_output=True, text=True, shell=True)
                 print("\nError while cleaning...❕\n")
                 print("\nHacking Failed...❌\n")
                 exit(1)
             else:
                 output = subprocess.run(
-                    ['rm', asarBackup], capture_output=True, text=True)
+                    ['del', asarBackup], capture_output=True, text=True, shell=True)
                 return 1
 
 
@@ -170,7 +170,7 @@ def modifyCode(app):
 def crack():
     print("Starting the hack...💀\n")
     if(len(sys.argv) == 1):
-        asarPath = os.path.abspath('/opt/StarUML/resources')
+        asarPath = os.path.abspath('C:/Program Files/StarUML/resources')
     else:
         asarPath = os.path.abspath(os.path.abspath(sys.argv[1]) + '/resources')
     asarFile = os.path.abspath(asarPath + '/app.asar')
